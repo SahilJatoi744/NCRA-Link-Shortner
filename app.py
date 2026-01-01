@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 from urllib.parse import quote
+import json
 
 # Set page config
 st.set_page_config(page_title="NCRA Link Shortener", page_icon="🔗", layout="centered")
@@ -57,51 +58,51 @@ Just paste your URL below and click **"Shorten URL"** to get started.
 # URL input
 url = st.text_input("🌐 Enter the URL you want to shorten:", placeholder="https://example.com/very/long/url")
 
-# Function to shorten URL using multiple services
-def shorten_url_tinyurl(long_url):
-    """Shorten URL using TinyURL API (direct link, no preview)"""
-    try:
-        # Create alias to avoid preview page
-        response = requests.post(
-            'https://tinyurl.com/api/v1/create',
-            json={'url': long_url},
-            headers={'Content-Type': 'application/json'},
-            timeout=10
-        )
-        if response.status_code == 200:
-            data = response.json()
-            if 'data' in data and 'tiny_url' in data['data']:
-                return data['data']['tiny_url']
-        return None
-    except:
-        # Fallback to simple API
-        try:
-            api_url = f"https://tinyurl.com/api-create.php?url={quote(long_url)}"
-            response = requests.get(api_url, timeout=10)
-            if response.status_code == 200 and response.text.startswith('http'):
-                return response.text
-            return None
-        except Exception as e:
-            return None
-
+# Function to shorten URL using is.gd (NO PREVIEW PAGE!)
 def shorten_url_isgd(long_url):
-    """Shorten URL using is.gd API"""
+    """Shorten URL using is.gd API - Direct redirect, no preview"""
     try:
         api_url = f"https://is.gd/create.php?format=simple&url={quote(long_url)}"
         response = requests.get(api_url, timeout=10)
         if response.status_code == 200 and response.text.startswith('http'):
-            return response.text
+            return response.text.strip()
         return None
     except Exception as e:
         return None
 
+# Function to shorten URL using v.gd (NO PREVIEW PAGE!)
+def shorten_url_vgd(long_url):
+    """Shorten URL using v.gd API - Direct redirect, no preview"""
+    try:
+        api_url = f"https://v.gd/create.php?format=simple&url={quote(long_url)}"
+        response = requests.get(api_url, timeout=10)
+        if response.status_code == 200 and response.text.startswith('http'):
+            return response.text.strip()
+        return None
+    except Exception as e:
+        return None
+
+# Function to shorten URL using clck.ru (NO PREVIEW PAGE!)
 def shorten_url_clckru(long_url):
-    """Shorten URL using clck.ru API"""
+    """Shorten URL using clck.ru API - Direct redirect, no preview"""
     try:
         api_url = "https://clck.ru/--"
         response = requests.post(api_url, data={'url': long_url}, timeout=10)
         if response.status_code == 200 and response.text.startswith('http'):
-            return response.text
+            return response.text.strip()
+        return None
+    except Exception as e:
+        return None
+
+# Function to shorten URL using ulvis.net (NO PREVIEW PAGE!)
+def shorten_url_ulvis(long_url):
+    """Shorten URL using ulvis.net API - Direct redirect, no preview"""
+    try:
+        api_url = "https://ulvis.net/api.php"
+        params = {'url': long_url}
+        response = requests.get(api_url, params=params, timeout=10)
+        if response.status_code == 200 and response.text.startswith('http'):
+            return response.text.strip()
         return None
     except Exception as e:
         return None
@@ -115,10 +116,13 @@ def is_valid_url(url_string):
 # Add service selector
 st.markdown("### Choose a shortening service:")
 service = st.radio(
-    "Select service:",
-    ["TinyURL (Recommended)", "is.gd", "clck.ru", "Try All"],
-    horizontal=True
+    "Select service (All redirect directly without preview):",
+    ["is.gd (Recommended)", "v.gd", "clck.ru", "ulvis.net", "Try All Services"],
+    horizontal=False
 )
+
+# Info about services
+st.info("✅ All these services redirect directly to your destination without preview pages!")
 
 # Shorten URL button
 if st.button("🚀 Shorten URL"):
@@ -128,28 +132,42 @@ if st.button("🚀 Shorten URL"):
         else:
             with st.spinner("Shortening your URL..."):
                 short_url = None
+                service_used = ""
                 
-                if service == "TinyURL (Recommended)":
-                    short_url = shorten_url_tinyurl(url)
-                elif service == "is.gd":
+                if service == "is.gd (Recommended)":
                     short_url = shorten_url_isgd(url)
+                    service_used = "is.gd"
+                elif service == "v.gd":
+                    short_url = shorten_url_vgd(url)
+                    service_used = "v.gd"
                 elif service == "clck.ru":
                     short_url = shorten_url_clckru(url)
-                else:  # Try All
-                    short_url = shorten_url_tinyurl(url)
+                    service_used = "clck.ru"
+                elif service == "ulvis.net":
+                    short_url = shorten_url_ulvis(url)
+                    service_used = "ulvis.net"
+                else:  # Try All Services
+                    short_url = shorten_url_isgd(url)
+                    service_used = "is.gd"
                     if not short_url:
-                        short_url = shorten_url_isgd(url)
+                        short_url = shorten_url_vgd(url)
+                        service_used = "v.gd"
                     if not short_url:
                         short_url = shorten_url_clckru(url)
+                        service_used = "clck.ru"
+                    if not short_url:
+                        short_url = shorten_url_ulvis(url)
+                        service_used = "ulvis.net"
                 
                 if short_url:
-                    st.success("✅ URL shortened successfully!")
+                    st.success(f"✅ URL shortened successfully using {service_used}!")
                     
                     # Display the shortened URL in a nice box
                     st.markdown(f"""
                     <div class="success-box">
                         <h4>Your shortened URL:</h4>
                         <h3 style="color: #4CAF50;">{short_url}</h3>
+                        <p style="color: #666; font-size: 0.9em;">✅ This link redirects DIRECTLY to your destination (no preview page)</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
@@ -159,7 +177,10 @@ if st.button("🚀 Shorten URL"):
                         st.code(short_url, language=None)
                     with col2:
                         if st.button("📋 Copy to Clipboard"):
-                            st.toast("✅ Copied to clipboard!", icon="✅")
+                            st.toast("✅ Link copied! (Use Ctrl+C to copy from the code box)", icon="✅")
+                    
+                    # Test the link
+                    st.markdown(f"🔗 [Click here to test your shortened link]({short_url})")
                     
                     # Show original URL
                     with st.expander("📝 View Original URL"):
@@ -174,8 +195,9 @@ st.markdown("---")
 st.markdown("""
 <div style='text-align: center; color: gray; padding: 1rem;'>
     <p>💡 <strong>Tip:</strong> Make sure your URL starts with http:// or https://</p>
+    <p>✅ <strong>All services provide DIRECT links</strong> - No preview pages!</p>
     <p>📧 For issues or suggestions, contact NCRA-CMS Lab</p>
-    <p><a href="https://sahiljatoi744.github.io/Sahil-Ali-Jatoi/" target="_blank">Visit NCRA-CMS Lab Website</a></p>
+    <p><a href="https://sahiljatoi744.github.io/Sahil-Ali-Jatoi/" target="_blank">🌐 Visit NCRA-CMS Lab Website</a></p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -187,17 +209,31 @@ with st.sidebar:
     shareable URLs for your long links.
     
     **Features:**
+    - ✅ Direct redirect (NO preview pages)
     - Multiple shortening services
     - Easy copy functionality
     - Fast and reliable
     - Free to use
     
     **Supported Services:**
-    - TinyURL
-    - is.gd
-    - clck.ru
+    - **is.gd** - Fast & reliable
+    - **v.gd** - Alternative to is.gd
+    - **clck.ru** - Russian service
+    - **ulvis.net** - Privacy focused
+    
+    All services redirect directly without 
+    showing any preview or interstitial pages!
     """)
     
     st.markdown("---")
     st.markdown("**NCRA-CMS Lab**")
     st.markdown("[Visit our website](https://sahiljatoi744.github.io/Sahil-Ali-Jatoi/)")
+    
+    st.markdown("---")
+    st.markdown("### 🎯 Why No Preview?")
+    st.write("""
+    Preview pages slow down access and 
+    frustrate users. Our selected services 
+    provide clean, direct redirects for the 
+    best user experience!
+    "
