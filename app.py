@@ -58,6 +58,21 @@ Just paste your URL below and click **"Shorten URL"** to get started.
 # URL input
 url = st.text_input("🌐 Enter the URL you want to shorten:", placeholder="https://example.com/very/long/url")
 
+# Function to shorten URL using ShortURL.at (NO PREVIEW PAGE!)
+def shorten_url_shorturlat(long_url):
+    """Shorten URL using shorturl.at API - Direct redirect, no preview"""
+    try:
+        api_url = "https://www.shorturl.at/shortener.php"
+        response = requests.post(api_url, data={'url': long_url}, timeout=10)
+        if response.status_code == 200:
+            # The response contains the shortened URL
+            result = response.text.strip()
+            if result.startswith('http'):
+                return result
+        return None
+    except Exception as e:
+        return None
+
 # Function to shorten URL using is.gd (NO PREVIEW PAGE!)
 def shorten_url_isgd(long_url):
     """Shorten URL using is.gd API - Direct redirect, no preview"""
@@ -117,7 +132,7 @@ def is_valid_url(url_string):
 st.markdown("### Choose a shortening service:")
 service = st.radio(
     "Select service (All redirect directly without preview):",
-    ["is.gd (Recommended)", "v.gd", "clck.ru", "ulvis.net", "Try All Services"],
+    ["ShortURL.at (Recommended)", "is.gd", "v.gd", "clck.ru", "ulvis.net", "Try All Services"],
     horizontal=False
 )
 
@@ -134,7 +149,10 @@ if st.button("🚀 Shorten URL"):
                 short_url = None
                 service_used = ""
                 
-                if service == "is.gd (Recommended)":
+                if service == "ShortURL.at (Recommended)":
+                    short_url = shorten_url_shorturlat(url)
+                    service_used = "ShortURL.at"
+                elif service == "is.gd":
                     short_url = shorten_url_isgd(url)
                     service_used = "is.gd"
                 elif service == "v.gd":
@@ -147,8 +165,11 @@ if st.button("🚀 Shorten URL"):
                     short_url = shorten_url_ulvis(url)
                     service_used = "ulvis.net"
                 else:  # Try All Services
-                    short_url = shorten_url_isgd(url)
-                    service_used = "is.gd"
+                    short_url = shorten_url_shorturlat(url)
+                    service_used = "ShortURL.at"
+                    if not short_url:
+                        short_url = shorten_url_isgd(url)
+                        service_used = "is.gd"
                     if not short_url:
                         short_url = shorten_url_vgd(url)
                         service_used = "v.gd"
@@ -216,6 +237,7 @@ with st.sidebar:
     - Free to use
     
     **Supported Services:**
+    - **ShortURL.at** - Fast & clean
     - **is.gd** - Fast & reliable
     - **v.gd** - Alternative to is.gd
     - **clck.ru** - Russian service
@@ -236,4 +258,4 @@ with st.sidebar:
     frustrate users. Our selected services 
     provide clean, direct redirects for the 
     best user experience!
-    "
+    """)
