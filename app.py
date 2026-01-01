@@ -59,15 +59,30 @@ url = st.text_input("🌐 Enter the URL you want to shorten:", placeholder="http
 
 # Function to shorten URL using multiple services
 def shorten_url_tinyurl(long_url):
-    """Shorten URL using TinyURL API"""
+    """Shorten URL using TinyURL API (direct link, no preview)"""
     try:
-        api_url = f"https://tinyurl.com/api-create.php?url={quote(long_url)}"
-        response = requests.get(api_url, timeout=10)
-        if response.status_code == 200 and response.text.startswith('http'):
-            return response.text
+        # Create alias to avoid preview page
+        response = requests.post(
+            'https://tinyurl.com/api/v1/create',
+            json={'url': long_url},
+            headers={'Content-Type': 'application/json'},
+            timeout=10
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if 'data' in data and 'tiny_url' in data['data']:
+                return data['data']['tiny_url']
         return None
-    except Exception as e:
-        return None
+    except:
+        # Fallback to simple API
+        try:
+            api_url = f"https://tinyurl.com/api-create.php?url={quote(long_url)}"
+            response = requests.get(api_url, timeout=10)
+            if response.status_code == 200 and response.text.startswith('http'):
+                return response.text
+            return None
+        except Exception as e:
+            return None
 
 def shorten_url_isgd(long_url):
     """Shorten URL using is.gd API"""
@@ -186,4 +201,3 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("**NCRA-CMS Lab**")
     st.markdown("[Visit our website](https://sahiljatoi744.github.io/Sahil-Ali-Jatoi/)")
-
