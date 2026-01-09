@@ -144,7 +144,7 @@ with col2:
     st.markdown('<p class="header-subtitle">The World\'s Most Advanced URL Shortener</p>', unsafe_allow_html=True)
 
 try:
-    st.image("images.png", use_container_width=True)
+    st.image("images.jpg", use_container_width=True)
 except:
     pass
 
@@ -554,7 +554,6 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("**Presented by NCRA-CMS Lab**")
-    st.markdown("[🌐 Visit Website](https://sahiljatoi744.github.io/Sahil-Ali-Jatoi/)")
     
     st.markdown("---")
     st.info("💡 **Pro Tip:** The fastest service changes based on your location and current server load!")
